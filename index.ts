@@ -5,7 +5,7 @@ import cors from 'cors';
 
 
 //    inicializamos nuestro servidor
-const server = new Server();
+const server = Server.instance;
 
 //    configuramos nuestro body parser para transformar la data que viene desde los formularios a un objeto javascript para trabajarlo del lado de node
 server.app.use( bodyParser.urlencoded( { extended: true }) );
