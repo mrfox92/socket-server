@@ -12,7 +12,7 @@ import { Usuario } from '../classes/usuario';
 //    instancia para manejar nuestros usuarios conectados mediante el patron singleton
 export const usuariosConectados = new UsuariosLista();
 
-export const conectarCliente = ( cliente: Socket ) => {
+export const conectarCliente = ( cliente: Socket, io: socketIO.Server ) => {
 
     //    creamos un nuevo usuario
     const usuario = new Usuario( cliente.id );
@@ -21,13 +21,15 @@ export const conectarCliente = ( cliente: Socket ) => {
 }
 
 
-export const desconectar = ( cliente: Socket ) => {
+export const desconectar = ( cliente: Socket, io: socketIO.Server ) => {
     
     cliente.on('disconnect', () => {
 
         console.log('Cliente desconectado');
         //    llamamos el metodo borrar para eliminar el cliente de la lista
         usuariosConectados.borrarUsuario( cliente.id );
+        //    emitimos a los usuarios activos la lista de usuarios conectados
+        io.emit( 'usuarios-activos', usuariosConectados.getLista() );
     });
 }
 
@@ -57,11 +59,26 @@ export const configurarUsuario = ( cliente: Socket, io: socketIO.Server ) => {
 
         //    llamamos al metodo para actualizar nombre de usuario
         usuariosConectados.actualizarNombre( cliente.id, payload.nombre );
+        //    emitimos a los usuarios activos la lista de usuarios conectados
+        io.emit( 'usuarios-activos', usuariosConectados.getLista() );
 
         //    llamamos al callback
         callback({
             ok: true,
             mensaje: `Usuario ${ payload.nombre } configurado`
         });
+    });
+}
+
+//    Obtener Usuarios: Escuchar por emision de obtenerUsuarios del lado de Angular
+//    Se debe escuchar el evento y emitir la lista
+//    emitir unicamente al usuario que lo esta solicitando
+
+export const obtenerUsuarios = ( cliente: Socket, io: socketIO.Server ) => {
+
+    //    escuchamos el evento obtener-usuarios
+    cliente.on('obtener-usuarios', () => {
+
+        io.to( cliente.id ).emit( 'usuarios-activos', usuariosConectados.getLista() );
     });
 }

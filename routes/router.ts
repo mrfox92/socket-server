@@ -1,6 +1,7 @@
 
 import { Router, Request, Response } from 'express';
 import Server from '../classes/server';
+import { usuariosConectados } from '../sockets/socket';
 
 //    utilizamos router para crear nuestras API endpoints
 
@@ -27,8 +28,9 @@ router.post('/mensajes', ( req: Request, res: Response ) => {
         cuerpo
     };
 
-    //    emitimos el mensaje
+    //    utilizamos la instancia de nuestro server para crear un objeto
     const server = Server.instance;
+    //    emitimos el mensaje
     server.io.emit( 'mensaje-nuevo', payload );
 
     res.json({
@@ -64,6 +66,43 @@ router.post('/mensajes/:id', ( req: Request, res: Response ) => {
         cuerpo,
         de,
         id
+    });
+
+});
+
+//    Servicio para obtener todos los IDs de los usuarios
+
+router.get('/usuarios', ( req: Request, res: Response ) => {
+
+    //    obtener la sesion o los IDs de los sockets utilizamos la instancia de io que esta en nuestro server
+    const server = Server.instance;
+
+    //    barremos todos los clientes mediante la funcion de io.clients y retornamos la respuesta
+    server.io.clients( ( err: any, clientes: string[] ) => {
+
+        if ( err ) {
+            return res.json({
+                ok: false,
+                err
+            })
+        }
+
+        res.json({
+            ok: true,
+            clientes
+        });
+    });
+});
+
+//    Obtener usuarios y sus nombres
+router.get('/usuarios/detalle', ( req: Request, res: Response ) => {
+    //    importamos usuariosConectados que es la instancia de mi usuariosLista
+    
+    usuariosConectados
+
+    res.json({
+        ok: true,
+        clientes: usuariosConectados.getLista()
     });
 
 });
